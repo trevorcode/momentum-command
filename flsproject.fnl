@@ -1,1 +1,1 @@
-{:extra-globals "love"}
+{:libraries {:love2d true}}
