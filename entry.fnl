@@ -3,7 +3,6 @@
 
 (set _G.game-width 1920)
 (set _G.game-height 1080)
-(set _G.player {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :angle 0})
 (set _G.cursor {:x 0 :y 0})
 
 (fn love.load []
@@ -14,6 +13,12 @@
                     (* 0.4 window-width)
                     (* 0.4 window-height)
                     {:vsync true :resizable true})
+  (local myFont (love.graphics.newImageFont
+                 :assets/imagefont.png
+                 (.. " abcdefghijklmnopqrstuvwxyz"
+                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0"
+                     "123456789.,!?-+/():;%&`'*#=[]\"")))
+  (love.graphics.setFont myFont)
   (scene-manager.change-scene :title-scene))
 
 (fn love.draw []
