@@ -15,15 +15,14 @@
   (local shadow-offset (if b.pressed? -1 -3))
   ;; (lg.rectangle :fill b.x b.y b.width b.height)
   (lg.rectangle :fill origin-x origin-y b.width b.height)
-  (if b.hover? 
+  (if b.hover?
       (lg.setColor 0.7 0.7 0.7)
       (lg.setColor (/ 241 255) (/ 140 255) (/ 72 255)))
-  (lg.rectangle :fill (+ origin-x shadow-offset) (+ origin-y shadow-offset) b.width b.height)
+  (lg.rectangle :fill (+ origin-x shadow-offset) (+ origin-y shadow-offset)
+                b.width b.height)
   (lg.setColor 1 1 1)
-  (lg.print b.text
-            (+ origin-x b.t-off-x shadow-offset)
-            (+ origin-y b.t-off-y shadow-offset)
-            0 b.txt-size b.txt-size )
+  (lg.print b.text (+ origin-x b.t-off-x shadow-offset)
+            (+ origin-y b.t-off-y shadow-offset) 0 b.txt-size b.txt-size)
   (love.graphics.pop))
 
 (fn mousepressed [b]
@@ -34,8 +33,15 @@
   (when (= b.keybinding key)
     (b.onclick)))
 
-(fn new [{: text : x : y : width : height
-          : t-off-x : t-off-y : onclick : keybinding
+(fn new [{: text
+          : x
+          : y
+          : width
+          : height
+          : t-off-x
+          : t-off-y
+          : onclick
+          : keybinding
           : txt-size
           &as button}]
   (set button.txt-size (or txt-size 1))
