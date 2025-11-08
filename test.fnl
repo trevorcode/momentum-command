@@ -1,12 +1,29 @@
 (local push (require :lib.push))
 (local lg love.graphics)
 (local util (require :util))
+(local enemy (require :enemy))
 
 (local game {})
 
+(fn is-either [a b either1 either2]
+  (and (not= a b) (or (= a either1))))
+
+(fn on-collision-enter [a b contact]
+  (let [entity-a (a:getUserData)
+        entity-b (b:getUserData)]
+    (case [(?. entity-a :tag) (?. entity-b :tag)]
+      [:enemy :enemy] (print "ENEMY")
+      [:enemy :ball] (entity-a:collide-with-ball)
+      [:ball :enemy] (entity-b:collide-with-ball)
+      [nil nil] (print "NIL NIL"))))
+
+(fn on-collision-exit [a b contact])
+
 (fn load [] ; game world
   (set game.world (love.physics.newWorld 0 0 true)) ; (love.physics.setMeter 10)
+  (game.world:setCallbacks on-collision-enter on-collision-exit)
   (set game.bounds {}) ; left
+  (set game.objects [])
   (set game.bounds.left
        {:body (love.physics.newBody game.world 0 0 :static)
         :shape (love.physics.newEdgeShape 0 0 0 _G.game-height)})
@@ -35,14 +52,20 @@
                     :angle 0
                     :speed 10}) ; ball
   (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 50})
+  (set game.ball.tag :ball)
   (set game.ball.body (love.physics.newBody game.world game.ball.x game.ball.y
                                             :dynamic))
   (set game.ball.shape (love.physics.newCircleShape game.ball.radius))
   (set game.ball.fixture
        (love.physics.newFixture game.ball.body game.ball.shape)) ; restitution is how much % energy the fixture keeps after collision
+  (game.ball.fixture:setUserData game.ball)
   (game.ball.fixture:setRestitution 1.01)
   (game.ball.body:setMass 50)
-  (game.ball.body:setLinearVelocity 1500 500))
+  (game.ball.body:setLinearVelocity 1500 500)
+  (table.insert game.objects (enemy.new game.world 50 50))
+  (table.insert game.objects (enemy.new game.world 100 100))
+  (table.insert game.objects (enemy.new game.world 200 200))
+  (table.insert game.objects (enemy.new game.world 200 200)))
 
 (fn draw-rotated-rectangle [mode x y width height angle]
   (lg.push)
@@ -66,7 +89,9 @@
   (lg.print (let [(vx vy) (game.ball.body:getLinearVelocity)
                   (v) (math.sqrt (+ (math.pow vx 2) (math.pow vy 2)))]
               (string.format "Ball Linear Speed: %f vx:%f vy:%f" v vx vy))
-            nil 60))
+            nil 60)
+  (each [_ o (ipairs game.objects)]
+    (o:draw)))
 
 (fn update [dt]
   (game.world:update dt)
@@ -93,7 +118,14 @@
                              :width _G.game-width
                              :height _G.game-height})
     (set game.player.x new-x)
-    (set game.player.y new-y)))
+    (set game.player.y new-y))
+  (set game.objects (icollect [_ o (ipairs game.objects)]
+                      (if o.destroy?
+                          (do
+                            (case o.body b (b:destroy))
+                            nil)
+
+                          o))))
 
 (fn mousepressed [])
 (fn mousereleased [])
