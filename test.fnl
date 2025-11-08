@@ -2,6 +2,7 @@
 (local lg love.graphics)
 (local util (require :util))
 (local enemy (require :enemy))
+(local fennel (require :lib.fennel))
 
 (local game {})
 
@@ -67,20 +68,18 @@
 (fn load [] ; game world
   (set game.world (love.physics.newWorld 0 0 true)) ; (love.physics.setMeter 10)
   (game.world:setCallbacks on-collision-enter on-collision-exit)
-  (set game.bounds {}) 
-  (set game.objects []) 
+  (set game.bounds {})
+  (set game.objects [])
   (set game.player {:x (/ _G.game-width 2)
                     :y (/ _G.game-height 2)
                     :angle 0
                     :speed 10}) ; ball
-  
   (load-walls)
   (create-ball)
-
-  (table.insert game.objects (enemy.new game.world 50 50))
-  (table.insert game.objects (enemy.new game.world 100 100))
-  (table.insert game.objects (enemy.new game.world 200 200))
-  (table.insert game.objects (enemy.new game.world 200 200)))
+  (table.insert game.objects (enemy.new game.world game.objects 50 50))
+  (table.insert game.objects (enemy.new game.world game.objects 100 100))
+  (table.insert game.objects (enemy.new game.world game.objects 200 200))
+  (table.insert game.objects (enemy.new game.world game.objects 300 300)))
 
 (fn draw-rotated-rectangle [mode x y width height angle]
   (lg.push)
@@ -97,8 +96,7 @@
               (game.player.body:getWorldPoints (game.player.shape:getPoints)))
   (lg.setColor 0 0 1)
   (lg.circle :line game.player.x game.player.y 10)
-  (lg.setColor 1 1 1)
-  )
+  (lg.setColor 1 1 1))
 
 (fn draw-ball []
   (lg.circle :line _G.cursor.x _G.cursor.y 10)
@@ -119,8 +117,17 @@
   (each [_ o (ipairs game.objects)]
     (o:draw)))
 
+(fn delete-destroyed-game-objects! [objects]
+  (for [i (length objects) 1 -1]
+    (let [o (. objects i)]
+      (when o.destroy? 
+        (case o.body b (b:destroy))
+        (table.remove objects i)))))
+
 (fn update [dt]
   (game.world:update dt)
+  (each [_ o (ipairs game.objects)]
+    (o:update dt))
   (local (mouse-x mouse-y) (push:toGame (love.mouse.getPosition))) ; mouse within game
   (when (and mouse-x mouse-y)
     (local angle-to-mouse
@@ -146,12 +153,8 @@
                              :height _G.game-height})
     (set game.player.x new-x)
     (set game.player.y new-y))
-  (set game.objects (icollect [_ o (ipairs game.objects)]
-                      (if o.destroy?
-                          (do
-                            (case o.body b (b:destroy))
-                            nil)
-                          o)))
+  
+  (delete-destroyed-game-objects! game.objects)
   (set game.player.y new-y)
   (game.player.body:setPosition new-x new-y))
 

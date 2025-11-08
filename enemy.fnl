@@ -1,11 +1,12 @@
 (local lg love.graphics)
 (local assets (require :assets))
+(local projectile (require :projectile))
+(local fennel (require :lib.fennel))
 
 (local enemy {})
 (local max-tiers 4)
 
 (fn collide-with-ball [enemy]
-  
   (if (<= enemy.tier 1)
       (do
         (: (assets.explosion-sound:clone) :play)
@@ -25,9 +26,19 @@
     (lg.setColor color)
     (lg.circle :fill (self.body:getX) (self.body:getY) self.radius)))
 
-(fn update [dt])
+(fn create-new-projectile [objects]
+  (fn [self] 
+    (local p (projectile.new (self.body:getWorld) 30 30 50 50))
+    (table.insert objects p)))
 
-(fn new [world ?x ?y ?tier]
+(fn update [self dt]
+  (if (<= self.projectile-timer 0)
+      (do
+        (set self.projectile-timer 40)
+        (self:create-projectile))
+      (set self.projectile-timer (- self.projectile-timer 1))))
+
+(fn new [world objects ?x ?y ?tier]
   (let [new-enemy {}
         x (or ?x 50)
         y (or ?y 50)
@@ -49,6 +60,8 @@
       (tset :shape shape)
       (tset :draw draw)
       (tset :collide-with-ball collide-with-ball)
+      (tset :projectile-timer 30)
+      (tset :create-projectile (create-new-projectile objects))
       (tset :update update))
     new-enemy))
 
