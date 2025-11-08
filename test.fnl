@@ -4,44 +4,61 @@
 
 (local game {})
 
-(fn load [] ; game world
+(fn load []
+  ; game world
   (set game.world (love.physics.newWorld 0 0 true)) ; (love.physics.setMeter 10)
-  (set game.bounds {}) ; left
+  (set game.bounds {})
+
+  ; left
   (set game.bounds.left
        {:body (love.physics.newBody game.world 0 0 :static)
         :shape (love.physics.newEdgeShape 0 0 0 _G.game-height)})
   (set game.bounds.left.fixture
        (love.physics.newFixture game.bounds.left.body game.bounds.left.shape))
+
   ; right
   (set game.bounds.right
        {:body (love.physics.newBody game.world _G.game-width 0 :static)
         :shape (love.physics.newEdgeShape 0 0 0 _G.game-height)})
   (set game.bounds.right.fixture
        (love.physics.newFixture game.bounds.right.body game.bounds.right.shape))
+
   ; top
   (set game.bounds.top
        {:body (love.physics.newBody game.world 0 0 :static)
         :shape (love.physics.newEdgeShape 0 0 _G.game-width 0)})
   (set game.bounds.top.fixture
-       (love.physics.newFixture game.bounds.top.body game.bounds.top.shape)) ; bottom
+       (love.physics.newFixture game.bounds.top.body game.bounds.top.shape))
+
+  ; bottom
   (set game.bounds.bottom
        {:body (love.physics.newBody game.world 0 _G.game-height :static)
         :shape (love.physics.newEdgeShape 0 0 _G.game-width 0)})
   (set game.bounds.bottom.fixture
        (love.physics.newFixture game.bounds.bottom.body
-                                game.bounds.bottom.shape)) ; player
+                                game.bounds.bottom.shape))
+
+  ; player
   (set game.player {:x (/ _G.game-width 2)
                     :y (/ _G.game-height 2)
                     :angle 0
-                    :speed 10}) ; ball
-  (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 50})
+                    :speed 10})
+  (set game.player.body (love.physics.newBody game.world game.player.x game.player.y :kinematic))
+  ; The collision of the player is larger than the sprite, for good feels
+  (set game.player.shape (love.physics.newPolygonShape -30 0 30 110 30 -110))
+  (set game.player.fixture (love.physics.newFixture game.player.body game.player.shape))
+
+  ; ball
+  (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 10})
   (set game.ball.body (love.physics.newBody game.world game.ball.x game.ball.y
                                             :dynamic))
   (set game.ball.shape (love.physics.newCircleShape game.ball.radius))
   (set game.ball.fixture
-       (love.physics.newFixture game.ball.body game.ball.shape)) ; restitution is how much % energy the fixture keeps after collision
-  (game.ball.fixture:setRestitution 1.01)
-  (game.ball.body:setMass 50)
+       (love.physics.newFixture game.ball.body game.ball.shape))
+
+  ; restitution is how much % energy the fixture keeps after collision
+  (game.ball.fixture:setRestitution 1)
+  (game.ball.body:setMass 10)
   (game.ball.body:setLinearVelocity 1500 500))
 
 (fn draw-rotated-rectangle [mode x y width height angle]
@@ -52,10 +69,15 @@
   (lg.pop))
 
 (fn draw []
-  ;; (lg.setColor 0.6 0.6 1)
   ;; (lg.rectangle :fill 0 0 _G.game-width _G.game-height)
-  (draw-rotated-rectangle :fill game.player.x game.player.y 80 150
+  (draw-rotated-rectangle :fill game.player.x game.player.y 60 180
                           game.player.angle)
+  (lg.setColor 0.6 0.6 1)
+  (lg.polygon :fill (game.player.body:getWorldPoints (game.player.shape:getPoints)))
+  (lg.setColor 0 0 1)
+  (lg.circle :line game.player.x game.player.y 10)
+  (lg.setColor 1 1 1)
+
   (lg.circle :line _G.cursor.x _G.cursor.y 10)
   (lg.circle :fill (game.ball.body:getX) (game.ball.body:getY)
              (game.ball.shape:getRadius))
@@ -75,6 +97,7 @@
     (local angle-to-mouse
            (math.atan2 (- mouse-y game.player.y) (- mouse-x game.player.x)))
     (set game.player.angle angle-to-mouse)
+    (game.player.body:setAngle angle-to-mouse)
     (set _G.cursor.x mouse-x)
     (set _G.cursor.y mouse-y)) ; player movement
   (local (old-x old-y) (values game.player.x game.player.y))
@@ -93,7 +116,8 @@
                              :width _G.game-width
                              :height _G.game-height})
     (set game.player.x new-x)
-    (set game.player.y new-y)))
+    (set game.player.y new-y)
+    (game.player.body:setPosition new-x new-y)))
 
 (fn mousepressed [])
 (fn mousereleased [])
