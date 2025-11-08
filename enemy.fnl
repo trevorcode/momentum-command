@@ -1,12 +1,17 @@
 (local lg love.graphics)
+(local assets (require :assets))
 
 (local enemy {})
 (local max-tiers 4)
 
 (fn collide-with-ball [enemy]
+  
   (if (<= enemy.tier 1)
-      (set enemy.destroy? true)
+      (do
+        (: (assets.explosion-sound:clone) :play)
+        (set enemy.destroy? true))
       (do 
+        (: (assets.hit-hurt-sound:clone) :play)
         (set enemy.tier (- enemy.tier 1))
         (set enemy.radius (+ 30 (* enemy.tier 5))))))
 
