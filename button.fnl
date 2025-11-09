@@ -10,19 +10,25 @@
   (set b.pressed? (and b.hover? (love.mouse.isDown 1))))
 
 (fn draw [b]
+  (local color [(/ 241 255) (/ 140 255) (/ 241 255)] )
   (love.graphics.push)
   (love.graphics.translate b.x b.y)
   (local origin-x (- 0 (/ b.width 2)))
   (local origin-y (- 0 (/ b.height 2)))
   (love.graphics.rotate b.rotation)
-  (lg.setColor 0 0 0)
-  (local shadow-offset (if b.pressed? -1 -3))
+  (lg.setColor color)
   (lg.rectangle :fill origin-x origin-y b.width b.height)
+
+  (lg.setColor 1 1 1)
+  (lg.rectangle :fill (+ origin-x 5) (+ origin-y 5) (- b.width 10) (- b.height 10))
+
+  (lg.setColor color)
+  (lg.rectangle :fill (+ origin-x 10) (+ origin-y 10) (- b.width 20) (- b.height 20))
+
   (if b.hover?
-      (lg.setColor 0.7 0.7 0.7)
-      (lg.setColor (/ 241 255) (/ 140 255) (/ 72 255)))
-  (lg.rectangle :fill (+ origin-x shadow-offset) (+ origin-y shadow-offset)
-                b.width b.height)
+      (lg.setColor 0.3 0.3 0.3)
+      (lg.setColor 0.1 0.1 0.1))
+  (lg.rectangle :fill (+ origin-x 13) (+ origin-y 13) (- b.width 26) (- b.height 26))
   (lg.setColor 1 1 1)
   (let [font assets.font
         text b.text

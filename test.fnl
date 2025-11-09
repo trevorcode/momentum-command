@@ -5,8 +5,10 @@
 (local fennel (require :lib.fennel))
 (local projectile (require :projectile))
 (local assets (require :assets))
+(local button (require :button))
+(local sm (require :scene-manager))
 
-(local game {})
+(var game {})
 
 (fn player-pushes-ball [_player ball]
   (: (assets.laser-sound:clone) :play)
@@ -109,9 +111,8 @@
   (game.player.fixture:setUserData game.player))
 
 (fn load []
-  (push:setupCanvas [{:name "shader"
-                      :shader [assets.glow-shader-x assets.glow-shader-y]}
-                     {:name "noshader"}])
+  (set game {})
+  
   (set game.world (love.physics.newWorld 0 0 true))
   (game.world:setCallbacks on-collision-enter on-collision-exit)
   (set game.spawn-timer 0)
@@ -191,12 +192,6 @@
                   (when (= o.tag :enemy) o))
         projectiles (icollect [_ o (ipairs game.objects)]
                       (when (= o.tag :projectile) o))]
-    (assets.glow-shader-x:send "stepSize"
-                               [(/ 1 _G.game-width) (/ 1 _G.game-height)])
-    (assets.glow-shader-y:send "stepSize"
-                               [(/ 1 _G.game-width) (/ 1 _G.game-height)])
-    (assets.glow-shader-x:send "blurRadius" 40)
-    (assets.glow-shader-y:send "blurRadius" 40)
     (each [_ o (ipairs enemies)]
       (o:draw))
     (each [_ o (ipairs projectiles)]
@@ -212,6 +207,7 @@
   (lg.setColor 1 1 1)
 
   (when game.game-over?
+    (button.draw game.restart)
     (lg.printf "Game Over" 0 300 (/ _G.game-width 8) "center" 0 8 8 0 0 0))
 
   (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
@@ -236,7 +232,17 @@
   (set game.game-over? true)
   (set game.player.game-over? true)
   (game.player.body:setActive false)
-  (: (assets.explosion-sound:clone) :play))
+  (: (assets.explosion-sound:clone) :play)
+  (set game.restart
+       (button.new {:x (/ _G.game-width 2)
+                    :y (+ (/ _G.game-height 2) 100)
+                    :width 400
+                    :height 100
+                    :text "Restart"
+                    :txt-size 4
+                    :onclick (fn []
+                               (: (assets.laser-sound:clone) :play)
+                               (sm.change-scene :title-scene))})))
 
 (fn update-game [dt]
   (local ball-now-in-bounds?
@@ -305,11 +311,14 @@
 (fn update [dt]
   (game.world:update dt)
   (if game.game-over?
-      nil
+      (do 
+        (button.update game.restart dt))
       (update-game dt)))
 
 (fn mousepressed [])
-(fn mousereleased [])
+(fn mousereleased []
+  (when game.game-over?
+      (button.mousepressed game.restart)))
 (fn keypressed [])
 
 {: draw : update : load : mousepressed : mousereleased : keypressed}
