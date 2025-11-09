@@ -22,6 +22,9 @@
   (set projectile.destroy? true)
   (set game.player.health (- game.player.health 1)))
 
+(fn calc-spawn-timer [min max t difficulty]
+  (math.max min (- max (* t difficulty))))
+
 ; TODO: use Body.getUserData for this
 
 (fn on-collision-enter [a b contact]
@@ -116,6 +119,11 @@
   (set game.world (love.physics.newWorld 0 0 true))
   (game.world:setCallbacks on-collision-enter on-collision-exit)
   (set game.spawn-timer 0)
+  (set game.min-spawn-timer 1.25)
+  (set game.max-spawn-timer 6)
+  (set game.start-timer (love.timer.getTime))
+  ; higher coef, less time to reach min spawn timer, harder
+  (set game.difficulty-coef 0.1)
   (set game.bounds {})
   (set game.objects [])
   (load-walls)
@@ -258,7 +266,7 @@
     (set-game-over))
   (if (<= game.spawn-timer 0)
       (do
-        (set game.spawn-timer (+ 0.25 (love.math.random 0 8)))
+        (set game.spawn-timer (calc-spawn-timer game.min-spawn-timer game.max-spawn-timer (- (love.timer.getTime) game.start-timer) game.difficulty-coef))
         (let [create-proj (create-new-projectile game.objects game.player)]
           (table.insert game.objects
                         (enemy.new game.world create-proj game.player
