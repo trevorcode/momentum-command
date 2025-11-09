@@ -14,6 +14,10 @@
         [new-vx new-vy] (util.vector-scale [vx vy] 1.1)]
     (ball-body:setLinearVelocity new-vx new-vy)))
 
+(fn player-hits-projectile [_player projectile]
+  (set projectile.destroy? true)
+  (set game.player.health (- game.player.health 1))) ; TODO: use Body.getUserData for this
+
 (fn on-collision-enter [a b contact]
   (contact:setEnabled false)
   (let [entity-a (a:getUserData)
@@ -24,8 +28,8 @@
       [:enemy :enemy] (print "ENEMY")
       [:enemy :ball] (entity-a:collide-with-ball)
       [:ball :enemy] (entity-b:collide-with-ball)
-      [:projectile :player] (set entity-a.destroy? true)
-      [:player :projectile] (set entity-b.destroy? true)
+      [:projectile :player] (player-hits-projectile entity-b entity-a)
+      [:player :projectile] (player-hits-projectile entity-a entity-b)
       [a b] (print a b))))
 
 (fn on-collision-exit [a b contact]
@@ -89,7 +93,9 @@
   (set game.player {:x (/ _G.game-width 2)
                     :y (/ _G.game-height 2)
                     :angle 0
-                    :speed 10})
+                    :speed 10
+                    :health 5})
+                    
   (set game.player.tag :player)
   (set game.player.body
        (love.physics.newBody game.world game.player.x game.player.y :static))
@@ -167,7 +173,7 @@
                   (v) (math.sqrt (+ (math.pow vx 2) (math.pow vy 2)))]
               (string.format "Ball Linear Speed: %f vx:%f vy:%f" v vx vy))
             nil 60)
-  )
+  (lg.print (string.format "Health: %d" game.player.health) nil 100))
 
 (fn delete-destroyed-game-objects! [objects]
   (for [i (length objects) 1 -1]
@@ -178,6 +184,8 @@
 
 (fn update [dt]
   (game.world:update dt)
+  (when (<= 0 game.player.health)
+    (print "GAME OVER")) ; TODO: Change scene, etc.
 
   (if (<= game.spawn-timer 0)
       (do
