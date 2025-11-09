@@ -81,7 +81,7 @@
     (table.insert objects p)))
 
 (fn create-ball []
-  (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 10})
+  (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 10 :in-bounds? true :oob-max-duration 2})
   (set game.ball.tag :ball)
   (set game.ball.body (love.physics.newBody game.world game.ball.x game.ball.y
                                             :dynamic))
@@ -120,6 +120,7 @@
   (load-walls)
   (create-ball)
   (create-player)
+  (print (fennel.view (util.vector-rotate [1 0] math.pi)))
   (let [create-proj (create-new-projectile game.objects game.player)]
     (table.insert game.objects (enemy.new game.world create-proj game.player 50
                                           50))
@@ -212,7 +213,10 @@
 
 (fn update [dt]
   (game.world:update dt)
-  (when (<= 0 game.player.health)
+  (local ball-now-in-bounds?
+    (let [(ball-x ball-y) (game.ball.body:getPosition)]
+      (util.point-within? {:x ball-x :y ball-y} {:x 0 :y 0 :width _G.game-width :height _G.game-height})))
+  (when (<= game.player.health 0)
     (print "GAME OVER")) ; TODO: Change scene, etc.
   (if (<= game.spawn-timer 0)
       (do
@@ -225,6 +229,19 @@
       (set game.spawn-timer (- game.spawn-timer dt)))
   (each [_ o (ipairs game.objects)]
     (o:update dt))
+  ; When ball continues to be out-of-bounds
+  (when (not ball-now-in-bounds?)
+    (if game.ball.in-bounds?
+      (do ; Initial out of bounds frame
+        (set game.ball.in-bounds? false)
+        (set game.ball.oob-timer (love.timer.getTime)))
+      (let [oob-duration (- (love.timer.getTime) game.ball.oob-timer)
+           [new-vx new-vy] (util.vector-rotate [(game.ball.body:getLinearVelocity)] (math.floor (math.random 0 100000)))]
+        (when (<= game.ball.oob-max-duration oob-duration) ; CONSIDER: Reseting the ball linear velocity to a different direction
+          (game.ball.body:setPosition (/ _G.game-width 2) (/ _G.game-height 2))
+          (game.ball.body:setLinearVelocity new-vx new-vy)
+          (set game.ball.in-bounds? true))))) 
+        
   (local (mouse-x mouse-y) (push:toGame (love.mouse.getPosition))) ; mouse within game
   (when (and mouse-x mouse-y)
     (local angle-to-mouse

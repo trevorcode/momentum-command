@@ -12,6 +12,10 @@
 (fn vector-scale [[x y] mag]
   [(* x mag) (* y mag)])
 
+(fn vector-rotate [[vx vy] rad]
+  [(- (* vx (math.cos rad)) (* vy (math.sin rad)))
+   (+ (* vx (math.sin rad)) (* vy (math.cos rad)))])
+
 (fn point-within? [point boundingBox]
   (if (and point boundingBox)
       (let [{: x : y} point
@@ -28,4 +32,4 @@
         point {: x : y}]
     (point-within? point boundingBox)))
 
-{: point-within? : cursor-within? : cursor-position : vector-length : vector-scale : vector-normalize}
+{: point-within? : cursor-within? : cursor-position : vector-length : vector-scale : vector-normalize : vector-rotate }
