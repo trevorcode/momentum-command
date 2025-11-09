@@ -3,10 +3,10 @@
 (var horizontal-glow-shader-code
      "
 extern vec2 stepSize; 
+extern int blurRadius; 
 
 vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screenCoords) {
     vec4 pixel = Texel(texture, uv);
-    int blurRadius = 80;
 
     for (int i = -blurRadius; i <= blurRadius; i++) {
         pixel += Texel(texture, uv + vec2(stepSize.x * float(i), 0.0));
@@ -19,10 +19,10 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screenCoords) {
 (var vertical-glow-shader-code
      "
 extern vec2 stepSize; 
+extern int blurRadius; 
 
 vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screenCoords) {
     vec4 pixel = Texel(texture, uv);
-    int blurRadius = 80;
 
     for (int i = -blurRadius; i <= blurRadius; i++) {
         pixel += Texel(texture, uv + vec2(0.0, stepSize.y * float(i)));

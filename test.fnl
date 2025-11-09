@@ -9,6 +9,7 @@
 (local game {})
 
 (fn player-pushes-ball [_player ball]
+  (: (assets.laser-sound:clone) :play)
   (let [ball-body (ball:getBody)
         (vx vy) (ball-body:getLinearVelocity)
         [new-vx new-vy] (util.vector-scale [vx vy] 1.1)]
@@ -16,7 +17,9 @@
 
 (fn player-hits-projectile [_player projectile]
   (set projectile.destroy? true)
-  (set game.player.health (- game.player.health 1))) ; TODO: use Body.getUserData for this
+  (set game.player.health (- game.player.health 1)))
+
+; TODO: use Body.getUserData for this
 
 (fn on-collision-enter [a b contact]
   (contact:setEnabled false)
@@ -42,8 +45,7 @@
       [:ball :player] (player-pushes-ball b a)
       [_a _b] nil)))
 
-(fn load-walls []
-  ; left
+(fn load-walls [] ; left
   (set game.bounds.left
        {:body (love.physics.newBody game.world -25 (/ _G.game-height 2) :static)
         :shape (love.physics.newRectangleShape 50 _G.game-height)})
@@ -51,7 +53,8 @@
        (love.physics.newFixture game.bounds.left.body game.bounds.left.shape))
   ; right
   (set game.bounds.right
-       {:body (love.physics.newBody game.world (+ _G.game-width 25) (/ _G.game-height 2) :static)
+       {:body (love.physics.newBody game.world (+ _G.game-width 25)
+                                    (/ _G.game-height 2) :static)
         :shape (love.physics.newRectangleShape 50 _G.game-height)})
   (set game.bounds.right.fixture
        (love.physics.newFixture game.bounds.right.body game.bounds.right.shape))
@@ -60,10 +63,10 @@
        {:body (love.physics.newBody game.world (/ _G.game-width 2) -25 :static)
         :shape (love.physics.newRectangleShape _G.game-width 50)})
   (set game.bounds.top.fixture
-       (love.physics.newFixture game.bounds.top.body game.bounds.top.shape))
-  ; bottom
+       (love.physics.newFixture game.bounds.top.body game.bounds.top.shape)) ; bottom
   (set game.bounds.bottom
-       {:body (love.physics.newBody game.world (/ _G.game-width 2) (+ _G.game-height 25) :static)
+       {:body (love.physics.newBody game.world (/ _G.game-width 2)
+                                    (+ _G.game-height 25) :static)
         :shape (love.physics.newRectangleShape _G.game-width 50)})
   (set game.bounds.bottom.fixture
        (love.physics.newFixture game.bounds.bottom.body
@@ -95,24 +98,24 @@
                     :angle 0
                     :speed 10
                     :health 5})
-                    
   (set game.player.tag :player)
   (set game.player.body
-       (love.physics.newBody game.world game.player.x game.player.y :static))
-  ; The collision of the player is larger than the sprite, for good feels
-  (set game.player.shape (love.physics.newPolygonShape -30 0 0 110 30 110 30 -110 0 -110))
+       (love.physics.newBody game.world game.player.x game.player.y :static)) ; The collision of the player is larger than the sprite, for good feels
+  (set game.player.shape
+       (love.physics.newPolygonShape -30 0 0 110 30 110 30 -110 0 -110))
   (set game.player.fixture
        (love.physics.newFixture game.player.body game.player.shape))
   (game.player.fixture:setUserData game.player))
 
-(fn load [] ; game world
-  (push:setupCanvas [ {:name "shader" :shader [assets.glow-shader-x assets.glow-shader-y]}
-                      {:name "noshader"}])
-  (set game.world (love.physics.newWorld 0 0 true)) ; (love.physics.setMeter 10)
+(fn load [] 
+  (push:setupCanvas [{:name "shader"
+                      :shader [assets.glow-shader-x assets.glow-shader-y]}
+                     {:name "noshader"}])
+  (set game.world (love.physics.newWorld 0 0 true))
   (game.world:setCallbacks on-collision-enter on-collision-exit)
   (set game.spawn-timer 0)
   (set game.bounds {})
-  (set game.objects []) ; ball
+  (set game.objects [])
   (load-walls)
   (create-ball)
   (create-player)
@@ -149,20 +152,28 @@
              (game.ball.shape:getRadius)))
 
 (fn draw-scene []
-  (each [_ o (ipairs game.objects)]
-    (o:draw)))
+  (let [enemies (icollect [_ o (ipairs game.objects)]
+                  (when (= o.tag :enemy) o))
+        projectiles (icollect [_ o (ipairs game.objects)]
+                      (when (= o.tag :projectile) o))]
+    (assets.glow-shader-x:send "stepSize"
+                               [(/ 1 _G.game-width) (/ 1 _G.game-height)])
+    (assets.glow-shader-y:send "stepSize"
+                               [(/ 1 _G.game-width) (/ 1 _G.game-height)])
+    (assets.glow-shader-x:send "blurRadius" 40)
+    (assets.glow-shader-y:send "blurRadius" 40)
+    (each [_ o (ipairs enemies)]
+      (o:draw))
+    (each [_ o (ipairs projectiles)]
+      (o:draw))))
 
 (fn draw []
-  (assets.glow-shader-x:send "stepSize" [(/ 1 _G.game-width) (/ 1 _G.game-height)])
-  (assets.glow-shader-y:send "stepSize" [(/ 1 _G.game-width) (/ 1 _G.game-height)])
   (push:setCanvas "shader")
   (draw-scene)
-
   (push:setCanvas "noshader")
   (draw-player)
   (draw-ball)
   (draw-scene)
-
   (lg.setColor 1 1 1)
   (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
   (lg.print (string.format "Player X: %f Player Y: %f" game.player.x
@@ -186,17 +197,15 @@
   (game.world:update dt)
   (when (<= 0 game.player.health)
     (print "GAME OVER")) ; TODO: Change scene, etc.
-
   (if (<= game.spawn-timer 0)
       (do
-        (set game.spawn-timer (+ 2 (love.math.random 1 15)))
+        (set game.spawn-timer (+ 0.25 (love.math.random 0 8)))
         (let [create-proj (create-new-projectile game.objects game.player)]
           (table.insert game.objects
                         (enemy.new game.world create-proj game.player
                                    (love.math.random 50 (- _G.game-width 50))
                                    (love.math.random 50 (- _G.game-height 50))))))
       (set game.spawn-timer (- game.spawn-timer dt)))
-
   (each [_ o (ipairs game.objects)]
     (o:update dt))
   (local (mouse-x mouse-y) (push:toGame (love.mouse.getPosition))) ; mouse within game
@@ -227,7 +236,8 @@
   (let [(vx vy) (game.ball.body:getLinearVelocity)
         speed (util.vector-length [vx vy])]
     (when (< speed 600)
-      (let [[new-vx new-vy] (util.vector-scale (util.vector-normalize [vx vy]) 600)]
+      (let [[new-vx new-vy] (util.vector-scale (util.vector-normalize [vx vy])
+                                               600)]
         (game.ball.body:setLinearVelocity new-vx new-vy))))
   (delete-destroyed-game-objects! game.objects)
   (game.player.body:setPosition new-x new-y))

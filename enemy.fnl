@@ -2,11 +2,13 @@
 (local assets (require :assets))
 (local projectile (require :projectile))
 (local fennel (require :lib.fennel))
+(local util (require :util))
 
 (local enemy {})
 (local max-tiers 4)
-(local projectile-reload 100)
-(local speed 20)
+(local projectile-reload 4)
+(local speed 70)
+
 
 (fn collide-with-ball [enemy]
   (if (<= enemy.tier 1)
@@ -35,6 +37,7 @@
     (lg.circle :fill (self.body:getX) (self.body:getY) (- self.radius 10))))
 
 (fn update [self dt]
+
   (let [p-x (self.player.body:getX)
         p-y (self.player.body:getY)
         self-x (self.body:getX)
@@ -42,13 +45,14 @@
         angle (math.atan2 (- p-y self-y) (- p-x self-x))
         vx (* speed (math.cos angle))
         vy (* speed (math.sin angle))]
-    (self.body:setLinearVelocity vx vy))
+    (let [[new-vx new-vy] (util.vector-scale (util.vector-normalize [vx vy]) speed)]
+      (self.body:applyLinearImpulse new-vx new-vy)))
 
   (if (<= self.projectile-timer 0)
       (do
-        (set self.projectile-timer (+ projectile-reload (love.math.random 1 50)))
+        (set self.projectile-timer (+ projectile-reload (/ (love.math.random 100 400) 100)))
         (self:create-projectile))
-      (set self.projectile-timer (- self.projectile-timer 1))))
+      (set self.projectile-timer (- self.projectile-timer dt))))
 
 (fn new [world create-projectile player ?x ?y ?tier]
   (let [new-enemy {}
@@ -61,7 +65,8 @@
         fixture (love.physics.newFixture body shape)]
     (fixture:setRestitution 1.0)
     (body:setMass 40)
-    (body:setLinearVelocity (love.math.random 1 250) (love.math.random 1 250))
+    (body:setLinearDamping 4)
+    ;;(body:setLinearVelocity (love.math.random 1 250) (love.math.random 1 250))
     (fixture:setUserData new-enemy)
     (doto new-enemy
       (tset :tag :enemy)
@@ -72,7 +77,7 @@
       (tset :shape shape)
       (tset :draw draw)
       (tset :collide-with-ball collide-with-ball)
-      (tset :projectile-timer 30)
+      (tset :projectile-timer 1)
       (tset :create-projectile create-projectile)
       (tset :player player)
       (tset :update update))

@@ -5,7 +5,15 @@
 
 (fn draw [self]
   (lg.setColor 1 0.3 0.3)
-  (lg.circle :fill (self.body:getX) (self.body:getY) self.radius))
+  (lg.circle :fill (self.body:getX) (self.body:getY) self.radius)
+
+  (lg.setColor 1 1 1)
+  (lg.circle :fill (self.body:getX) (self.body:getY) (- self.radius 2))
+
+  (lg.setColor 0 0 0)
+  (lg.circle :fill (self.body:getX) (self.body:getY) (- self.radius 3))
+
+  (lg.setColor 1 1 1))
 
 (fn update [self dt])
 
