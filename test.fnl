@@ -7,8 +7,11 @@
 
 (local game {})
 
-(fn is-either [a b either1 either2]
-  (and (not= a b) (or (= a either1))))
+(fn player-pushes-ball [_player ball]
+  (let [ball-body (ball:getBody)
+        (vx vy) (ball-body:getLinearVelocity)
+        [new-vx new-vy] (util.vector-scale [vx vy] 1.1)]
+    (ball-body:setLinearVelocity new-vx new-vy)))
 
 (fn on-collision-enter [a b contact]
   (contact:setEnabled false)
@@ -24,29 +27,39 @@
       [:player :projectile] (set entity-b.destroy? true)
       [a b] (print a b))))
 
-(fn on-collision-exit [a b contact])
+(fn on-collision-exit [a b contact]
+  (let [entity-a (a:getUserData)
+        entity-b (b:getUserData)
+        tag-a (?. entity-a :tag)
+        tag-b (?. entity-b :tag)]
+    (case [tag-a tag-b]
+      [:player :ball] (player-pushes-ball a b)
+      [:ball :player] (player-pushes-ball b a)
+      [_a _b] nil)))
 
 (fn load-walls []
+  ; left
   (set game.bounds.left
-       {:body (love.physics.newBody game.world 0 0 :static)
-        :shape (love.physics.newEdgeShape 0 0 0 _G.game-height)})
+       {:body (love.physics.newBody game.world -25 (/ _G.game-height 2) :static)
+        :shape (love.physics.newRectangleShape 50 _G.game-height)})
   (set game.bounds.left.fixture
        (love.physics.newFixture game.bounds.left.body game.bounds.left.shape))
   ; right
   (set game.bounds.right
-       {:body (love.physics.newBody game.world _G.game-width 0 :static)
-        :shape (love.physics.newEdgeShape 0 0 0 _G.game-height)})
+       {:body (love.physics.newBody game.world (+ _G.game-width 25) (/ _G.game-height 2) :static)
+        :shape (love.physics.newRectangleShape 50 _G.game-height)})
   (set game.bounds.right.fixture
        (love.physics.newFixture game.bounds.right.body game.bounds.right.shape))
   ; top
   (set game.bounds.top
-       {:body (love.physics.newBody game.world 0 0 :static)
-        :shape (love.physics.newEdgeShape 0 0 _G.game-width 0)})
+       {:body (love.physics.newBody game.world (/ _G.game-width 2) -25 :static)
+        :shape (love.physics.newRectangleShape _G.game-width 50)})
   (set game.bounds.top.fixture
        (love.physics.newFixture game.bounds.top.body game.bounds.top.shape))
+  ; bottom
   (set game.bounds.bottom
-       {:body (love.physics.newBody game.world 0 _G.game-height :static)
-        :shape (love.physics.newEdgeShape 0 0 _G.game-width 0)})
+       {:body (love.physics.newBody game.world (/ _G.game-width 2) (+ _G.game-height 25) :static)
+        :shape (love.physics.newRectangleShape _G.game-width 50)})
   (set game.bounds.bottom.fixture
        (love.physics.newFixture game.bounds.bottom.body
                                 game.bounds.bottom.shape)))
@@ -78,9 +91,9 @@
                     :speed 10})
   (set game.player.tag :player)
   (set game.player.body
-       (love.physics.newBody game.world game.player.x game.player.y :kinematic))
+       (love.physics.newBody game.world game.player.x game.player.y :static))
   ; The collision of the player is larger than the sprite, for good feels
-  (set game.player.shape (love.physics.newPolygonShape -30 0 30 110 30 -110))
+  (set game.player.shape (love.physics.newPolygonShape -30 0 0 110 30 110 30 -110 0 -110))
   (set game.player.fixture
        (love.physics.newFixture game.player.body game.player.shape))
   (game.player.fixture:setUserData game.player))
@@ -148,18 +161,6 @@
         (case o.body b (b:destroy))
         (table.remove objects i)))))
 
-(fn vector-length [[vx vy]]
-  (math.sqrt (+ (^ vx 2) (^ vy 2))))
-
-(fn vector-normalize [[vx vy]]
-  (let [len (vector-length [vx vy])
-        new-vx (/ vx len)
-        new-vy (/ vy len)]
-    [new-vx new-vy]))
-
-(fn vector-scale [[x y] mag]
-  [(* x mag) (* y mag)])
-
 (fn update [dt]
   (game.world:update dt)
 
@@ -201,12 +202,11 @@
     (set game.player.x new-x)
     (set game.player.y new-y))
   (let [(vx vy) (game.ball.body:getLinearVelocity)
-        speed (vector-length [vx vy])]
+        speed (util.vector-length [vx vy])]
     (when (< speed 600)
-      (let [[new-vx new-vy] (vector-scale (vector-normalize [vx vy]) 600)]
+      (let [[new-vx new-vy] (util.vector-scale (util.vector-normalize [vx vy]) 600)]
         (game.ball.body:setLinearVelocity new-vx new-vy))))
   (delete-destroyed-game-objects! game.objects)
-  (set game.player.y new-y)
   (game.player.body:setPosition new-x new-y))
 
 (fn mousepressed [])
