@@ -8,12 +8,13 @@
 
 (fn love.load []
   (local (window-width window-height) (love.window.getDesktopDimensions))
-  ;;(love.graphics.setDefaultFilter "nearest" "nearest")
+  (love.graphics.setDefaultFilter "linear" "linear")
   (love.graphics.setColor 1 1 1)
   (push:setupScreen _G.game-width _G.game-height (* 0.4 window-width)
                     (* 0.4 window-height) {:vsync true :resizable true})
 
   (assets.load-assets)
+  (assets.font:setFilter "nearest" "nearest")
   (love.graphics.setFont assets.font)
   (scene-manager.change-scene :title-scene))
 
