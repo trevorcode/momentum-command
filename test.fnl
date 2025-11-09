@@ -133,7 +133,6 @@
   (load-walls)
   (create-ball)
   (create-player)
-  (print (fennel.view (util.vector-rotate [1 0] math.pi)))
   (let [create-proj (create-new-projectile game.objects game.player)]
     (table.insert game.objects (enemy.new game.world create-proj game.player 50
                                           50))
@@ -211,7 +210,7 @@
 
 (fn draw-hearts []
   (for [i 0 (- game.player.health 1) 1]
-    (lg.draw assets.heart (* i 35) (- _G.game-height 40) 0 3 3)))
+    (lg.draw assets.heart (+ (* i 30) 50) 60 0 5 5)))
 
 (fn draw-score []
   (lg.printf (string.format "%d" game.score) 100 50 175 :right nil 10 10))
@@ -268,6 +267,7 @@
                                (sm.change-scene :title-scene))})))
 
 (fn update-game [dt]
+  (game.world:update dt)
   (local ball-now-in-bounds?
     (let [(ball-x ball-y) (game.ball.body:getPosition)]
       (util.point-within? {:x ball-x :y ball-y} {:x 0 :y 0 :width _G.game-width :height _G.game-height})))
@@ -332,9 +332,8 @@
   (game.player.body:setPosition new-x new-y))
 
 (fn update [dt]
-  (game.world:update dt)
   (if game.game-over?
-      (do 
+      (do
         (button.update game.restart dt))
       (update-game dt)))
 
