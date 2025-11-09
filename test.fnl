@@ -35,8 +35,12 @@
         tag-b (?. entity-b :tag)]
     (case [tag-a tag-b]
       [:enemy :enemy] nil
-      [:enemy :ball] (entity-a:collide-with-ball)
-      [:ball :enemy] (entity-b:collide-with-ball)
+      [:enemy :ball] (do
+        (entity-a:collide-with-ball)
+        (when entity-a.destroy? (set game.score (+ game.score 1))))
+      [:ball :enemy] (do
+        (entity-b:collide-with-ball)
+        (when entity-b.destroy? (set game.score (+ game.score 1))))
       [:projectile :player] (player-hits-projectile entity-b entity-a)
       [:player :projectile] (player-hits-projectile entity-a entity-b)
       [a b] nil)))
@@ -86,7 +90,7 @@
     (table.insert objects p)))
 
 (fn create-ball []
-  (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 10 :in-bounds? true :oob-max-duration 2})
+  (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 50 :in-bounds? true :oob-max-duration 2 :min-speed 800})
   (set game.ball.tag :ball)
   (set game.ball.body (love.physics.newBody game.world game.ball.x game.ball.y
                                             :dynamic))
@@ -96,7 +100,7 @@
   (game.ball.fixture:setUserData game.ball) ; restitution is how much % energy the fixture keeps after collision
   (game.ball.fixture:setRestitution 1)
   (game.ball.body:setMass 50)
-  (game.ball.body:setLinearVelocity 500 500))
+  (game.ball.body:setLinearVelocity 600 600))
 
 (fn create-player []
   (set game.player {:x (/ _G.game-width 2)
@@ -123,6 +127,7 @@
   (set game.start-timer (love.timer.getTime))
   ; higher coef, less time to reach min spawn timer, harder
   (set game.difficulty-coef 0.1)
+  (set game.score 0)
   (set game.bounds {})
   (set game.objects [])
   (load-walls)
@@ -208,6 +213,9 @@
   (for [i 0 (- game.player.health 1) 1]
     (lg.draw assets.heart (* i 35) (- _G.game-height 40) 0 3 3)))
 
+(fn draw-score []
+  (lg.printf (string.format "%d" game.score) 100 50 175 :right nil 10 10))
+
 (fn draw []
   (push:setCanvas "shader")
   (draw-scene)
@@ -222,17 +230,19 @@
     (lg.printf "Game Over" 0 300 (/ _G.game-width 8) "center" 0 8 8 0 0 0))
 
   (draw-hearts)
+  (draw-score)
 
-  (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
-  (lg.print (string.format "Player X: %f Player Y: %f" game.player.x
-                           game.player.y) nil 20)
-  (lg.print (string.format "Angle: %f" game.player.angle) nil 40)
-  (lg.print (string.format "Spawn Timer: %f" game.spawn-timer) nil 80)
-  (lg.print (let [(vx vy) (game.ball.body:getLinearVelocity)
-                  (v) (math.sqrt (+ (math.pow vx 2) (math.pow vy 2)))]
-              (string.format "Ball Linear Speed: %f vx:%f vy:%f" v vx vy))
-            nil 60)
-  (lg.print (string.format "Health: %d" game.player.health) nil 100))
+  ; (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
+  ; (lg.print (string.format "Player X: %f Player Y: %f" game.player.x
+  ;                          game.player.y) nil 20)
+  ; (lg.print (string.format "Angle: %f" game.player.angle) nil 40)
+  ; (lg.print (string.format "Spawn Timer: %f" game.spawn-timer) nil 80)
+  ; (lg.print (let [(vx vy) (game.ball.body:getLinearVelocity)
+  ;                 (v) (math.sqrt (+ (math.pow vx 2) (math.pow vy 2)))]
+  ;             (string.format "Ball Linear Speed: %f vx:%f vy:%f" v vx vy))
+  ;           nil 60)
+  ; (lg.print (string.format "Health: %d" game.player.health) nil 100))
+  )
 
 (fn delete-destroyed-game-objects! [objects]
   (for [i (length objects) 1 -1]
@@ -314,9 +324,9 @@
     (set game.player.y new-y))
   (let [(vx vy) (game.ball.body:getLinearVelocity)
         speed (util.vector-length [vx vy])]
-    (when (< speed 600)
+    (when (< speed game.ball.min-speed)
       (let [[new-vx new-vy] (util.vector-scale (util.vector-normalize [vx vy])
-                                               600)]
+                                               game.ball.min-speed)]
         (game.ball.body:setLinearVelocity new-vx new-vy))))
   (delete-destroyed-game-objects! game.objects)
   (game.player.body:setPosition new-x new-y))
