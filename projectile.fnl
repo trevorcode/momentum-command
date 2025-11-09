@@ -15,7 +15,11 @@
 
   (lg.setColor 1 1 1))
 
-(fn update [self dt])
+(fn update [self dt]
+  (print self.duration)
+  (set self.duration (- self.duration dt))
+  (when (<= self.duration 0)
+    (set self.destroy? true)))
 
 (fn new [world origin-x origin-y target-x target-y]
   (let [new-projectile {}
@@ -33,6 +37,7 @@
     (body:setLinearVelocity vx vy)
     (doto new-projectile
       (tset :radius radius)
+      (tset :duration 40)
       (tset :body body)
       (tset :tag :projectile)
       (tset :shape shape)

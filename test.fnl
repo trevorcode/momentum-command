@@ -16,6 +16,7 @@
     (ball-body:setLinearVelocity new-vx new-vy)))
 
 (fn player-hits-projectile [_player projectile]
+  (: (assets.paddlehurt-sound:clone) :play)
   (set projectile.destroy? true)
   (set game.player.health (- game.player.health 1)))
 

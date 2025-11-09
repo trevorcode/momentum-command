@@ -41,6 +41,8 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screenCoords) {
                                                    "123456789.,!?-+/():;%&`'*#=[]\"")))
   (set assets.explosion-sound (love.audio.newSource :assets/explosion.wav :static))
   (set assets.hit-hurt-sound (love.audio.newSource :assets/hitHurt.wav :static))
-  (set assets.laser-sound (love.audio.newSource :assets/laser.wav :static)))
+  (set assets.laser-sound (love.audio.newSource :assets/laser.wav :static))
+  (set assets.paddlehurt-sound (love.audio.newSource :assets/paddlehurt.wav :static))
+  )
 
 assets
