@@ -194,9 +194,13 @@
 
 (fn draw-ball []
   (lg.setColor 1 1 1)
-  (lg.circle :line _G.cursor.x _G.cursor.y 10)
   (lg.circle :fill (game.ball.body:getX) (game.ball.body:getY)
-             (game.ball.shape:getRadius)))
+             (game.ball.shape:getRadius))
+  (lg.setColor 0 0 0)
+  (lg.circle :fill (game.ball.body:getX) (game.ball.body:getY) (- (game.ball.shape:getRadius) 4))
+  (lg.setColor 1 1 1)
+  (lg.circle :fill (game.ball.body:getX) (game.ball.body:getY)
+             (- (game.ball.shape:getRadius) 10)))
 
 (fn draw-scene []
   (let [enemies (icollect [_ o (ipairs game.objects)]
@@ -223,6 +227,7 @@
   (draw-ball)
   (draw-scene)
   (lg.setColor 1 1 1)
+  (lg.circle :line _G.cursor.x _G.cursor.y 10) ; cursor
 
   (when game.game-over?
     (button.draw game.restart)
