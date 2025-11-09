@@ -115,7 +115,6 @@
 
 (fn load []
   (set game {})
-  
   (set game.world (love.physics.newWorld 0 0 true))
   (game.world:setCallbacks on-collision-enter on-collision-exit)
   (set game.spawn-timer 0)
