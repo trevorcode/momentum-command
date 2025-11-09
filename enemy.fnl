@@ -26,7 +26,13 @@
                 4 [0.7 0.5 0.9]
                 nil [0.3 0.5 0.1])]
     (lg.setColor color)
-    (lg.circle :fill (self.body:getX) (self.body:getY) self.radius)))
+    (lg.circle :fill (self.body:getX) (self.body:getY) self.radius)
+    (lg.setColor 1 1 1)
+    (lg.circle :fill (self.body:getX) (self.body:getY) (- self.radius 3))
+    (lg.setColor color)
+    (lg.circle :fill (self.body:getX) (self.body:getY) (- self.radius 7))
+    (lg.setColor 0 0 0)
+    (lg.circle :fill (self.body:getX) (self.body:getY) (- self.radius 10))))
 
 (fn update [self dt]
   (let [p-x (self.player.body:getX)

@@ -143,17 +143,6 @@
              (game.ball.shape:getRadius)))
 
 (fn draw-scene []
-  (draw-player)
-  (draw-ball)
-  (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
-  (lg.print (string.format "Player X: %f Player Y: %f" game.player.x
-                           game.player.y) nil 20)
-  (lg.print (string.format "Angle: %f" game.player.angle) nil 40)
-  (lg.print (string.format "Spawn Timer: %f" game.spawn-timer) nil 80)
-  (lg.print (let [(vx vy) (game.ball.body:getLinearVelocity)
-                  (v) (math.sqrt (+ (math.pow vx 2) (math.pow vy 2)))]
-              (string.format "Ball Linear Speed: %f vx:%f vy:%f" v vx vy))
-            nil 60)
   (each [_ o (ipairs game.objects)]
     (o:draw)))
 
@@ -164,7 +153,20 @@
   (draw-scene)
 
   (push:setCanvas "noshader")
+  (draw-player)
+  (draw-ball)
   (draw-scene)
+
+  (lg.setColor 1 1 1)
+  (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
+  (lg.print (string.format "Player X: %f Player Y: %f" game.player.x
+                           game.player.y) nil 20)
+  (lg.print (string.format "Angle: %f" game.player.angle) nil 40)
+  (lg.print (string.format "Spawn Timer: %f" game.spawn-timer) nil 80)
+  (lg.print (let [(vx vy) (game.ball.body:getLinearVelocity)
+                  (v) (math.sqrt (+ (math.pow vx 2) (math.pow vy 2)))]
+              (string.format "Ball Linear Speed: %f vx:%f vy:%f" v vx vy))
+            nil 60)
   )
 
 (fn delete-destroyed-game-objects! [objects]
