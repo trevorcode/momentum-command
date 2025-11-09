@@ -138,16 +138,32 @@
   (lg.pop))
 
 (fn draw-player []
-  (draw-rotated-rectangle :fill game.player.x game.player.y 60 180
-                          game.player.angle)
-  (lg.setColor 0.6 0.6 1)
-  (lg.polygon :fill
-              (game.player.body:getWorldPoints (game.player.shape:getPoints)))
-  (lg.setColor 0 0 1)
-  (lg.circle :line game.player.x game.player.y 10)
-  (lg.setColor 1 1 1))
-
+  (local (r g b) (lg.getColor))
+  (let [
+        hitbox-points [(game.player.shape:getPoints)]
+        [x1 y1 x2 y2 x3 y3 x4 y4 x5 y5] hitbox-points
+        ; TODO: fix offset directions
+        ; 1: lower right rectangle
+        ; 2: lower left rectangle
+        ; 3: upper left rectangle
+        ; 4: triangle tip
+        ; 5: upper right rectangle
+        hitbox-white [(- x1 4) (+ y1 4) (- x2 4) (- y2 4) (+ x3 4) (- y3 4) (+ x4 4) (+ y4 0) (+ x5 4) (+ y5 4)]
+        hitbox-black [(- x1 8) (+ y1 8) (- x2 8) (- y2 8) (+ x3 8) (- y3 8) (+ x4 8) (+ y4 0) (+ x5 8) (+ y5 8)]
+        ]
+    (lg.setColor 0.6 0.6 1)
+    (lg.polygon :fill
+                (game.player.body:getWorldPoints (unpack hitbox-points)))
+    (lg.setColor 1 1 1)
+    (lg.polygon :fill (game.player.body:getWorldPoints (unpack hitbox-white)))
+    (lg.setColor 0 0 0)
+    (lg.polygon :fill (game.player.body:getWorldPoints (unpack hitbox-black)))
+    (lg.setColor 1 0.6 0.6)
+    (lg.circle :line game.player.x game.player.y 10)
+    (lg.setColor r g b)))
+  
 (fn draw-ball []
+  (lg.setColor 1 1 1)
   (lg.circle :line _G.cursor.x _G.cursor.y 10)
   (lg.circle :fill (game.ball.body:getX) (game.ball.body:getY)
              (game.ball.shape:getRadius)))
