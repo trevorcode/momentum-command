@@ -203,7 +203,7 @@
   (let [(vx vy) (game.ball.body:getLinearVelocity)
         speed (vector-length [vx vy])]
     (when (< speed 600)
-      (let [[new-vx new-vy] (vector-scale (vector-normalize [vx vy]) 500)]
+      (let [[new-vx new-vy] (vector-scale (vector-normalize [vx vy]) 600)]
         (game.ball.body:setLinearVelocity new-vx new-vy))))
   (delete-destroyed-game-objects! game.objects)
   (set game.player.y new-y)
