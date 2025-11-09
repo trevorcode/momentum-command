@@ -2,6 +2,8 @@
 (local lg love.graphics)
 (local util (require :util))
 (local enemy (require :enemy))
+(local fennel (require :lib.fennel))
+(local projectile (require :projectile))
 
 (local game {})
 
@@ -11,12 +13,16 @@
 (fn on-collision-enter [a b contact]
   (contact:setEnabled false)
   (let [entity-a (a:getUserData)
-        entity-b (b:getUserData)]
-    (case [(?. entity-a :tag) (?. entity-b :tag)]
+        entity-b (b:getUserData)
+        tag-a (?. entity-a :tag)
+        tag-b (?. entity-b :tag)]
+    (case [tag-a tag-b]
       [:enemy :enemy] (print "ENEMY")
       [:enemy :ball] (entity-a:collide-with-ball)
       [:ball :enemy] (entity-b:collide-with-ball)
-      [nil nil] (print "NIL NIL"))))
+      [:projectile :player] (set entity-a.destroy? true)
+      [:player :projectile] (set entity-b.destroy? true)
+      [a b] (print a b))))
 
 (fn on-collision-exit [a b contact])
 
@@ -45,15 +51,24 @@
        (love.physics.newFixture game.bounds.bottom.body
                                 game.bounds.bottom.shape)))
 
+(fn create-new-projectile [objects player]
+  (fn [self]
+    (local p (projectile.new (self.body:getWorld) (self.body:getX)
+                             (self.body:getY) (player.body:getX)
+                             (player.body:getY)))
+    (table.insert objects p)))
+
 (fn create-ball []
   (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 10})
   (set game.ball.tag :ball)
+  (set game.player.tag :player)
   (set game.player.body
        (love.physics.newBody game.world game.player.x game.player.y :kinematic))
   ; The collision of the player is larger than the sprite, for good feels
   (set game.player.shape (love.physics.newPolygonShape -30 0 30 110 30 -110))
   (set game.player.fixture
        (love.physics.newFixture game.player.body game.player.shape)) ; ball
+  (game.player.fixture:setUserData game.player)
   (set game.ball.body (love.physics.newBody game.world game.ball.x game.ball.y
                                             :dynamic))
   (set game.ball.shape (love.physics.newCircleShape game.ball.radius))
@@ -67,20 +82,19 @@
 (fn load [] ; game world
   (set game.world (love.physics.newWorld 0 0 true)) ; (love.physics.setMeter 10)
   (game.world:setCallbacks on-collision-enter on-collision-exit)
-  (set game.bounds {}) 
-  (set game.objects []) 
+  (set game.bounds {})
+  (set game.objects [])
   (set game.player {:x (/ _G.game-width 2)
                     :y (/ _G.game-height 2)
                     :angle 0
                     :speed 10}) ; ball
-  
   (load-walls)
   (create-ball)
-
-  (table.insert game.objects (enemy.new game.world 50 50))
-  (table.insert game.objects (enemy.new game.world 100 100))
-  (table.insert game.objects (enemy.new game.world 200 200))
-  (table.insert game.objects (enemy.new game.world 200 200)))
+  (let [create-proj (create-new-projectile game.objects game.player)]
+    (table.insert game.objects (enemy.new game.world create-proj 50 50))
+    (table.insert game.objects (enemy.new game.world create-proj 100))
+    (table.insert game.objects (enemy.new game.world create-proj 200 200))
+    (table.insert game.objects (enemy.new game.world create-proj 300 300))))
 
 (fn draw-rotated-rectangle [mode x y width height angle]
   (lg.push)
@@ -97,8 +111,7 @@
               (game.player.body:getWorldPoints (game.player.shape:getPoints)))
   (lg.setColor 0 0 1)
   (lg.circle :line game.player.x game.player.y 10)
-  (lg.setColor 1 1 1)
-  )
+  (lg.setColor 1 1 1))
 
 (fn draw-ball []
   (lg.circle :line _G.cursor.x _G.cursor.y 10)
@@ -119,8 +132,17 @@
   (each [_ o (ipairs game.objects)]
     (o:draw)))
 
+(fn delete-destroyed-game-objects! [objects]
+  (for [i (length objects) 1 -1]
+    (let [o (. objects i)]
+      (when o.destroy?
+        (case o.body b (b:destroy))
+        (table.remove objects i)))))
+
 (fn update [dt]
   (game.world:update dt)
+  (each [_ o (ipairs game.objects)]
+    (o:update dt))
   (local (mouse-x mouse-y) (push:toGame (love.mouse.getPosition))) ; mouse within game
   (when (and mouse-x mouse-y)
     (local angle-to-mouse
@@ -146,12 +168,7 @@
                              :height _G.game-height})
     (set game.player.x new-x)
     (set game.player.y new-y))
-  (set game.objects (icollect [_ o (ipairs game.objects)]
-                      (if o.destroy?
-                          (do
-                            (case o.body b (b:destroy))
-                            nil)
-                          o)))
+  (delete-destroyed-game-objects! game.objects)
   (set game.player.y new-y)
   (game.player.body:setPosition new-x new-y))
 
