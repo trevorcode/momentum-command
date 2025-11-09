@@ -16,7 +16,6 @@
   (lg.setColor 1 1 1))
 
 (fn update [self dt]
-  (print self.duration)
   (set self.duration (- self.duration dt))
   (when (<= self.duration 0)
     (set self.destroy? true)))

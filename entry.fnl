@@ -8,7 +8,7 @@
 
 (fn love.load []
   (local (window-width window-height) (love.window.getDesktopDimensions))
-  (love.graphics.setDefaultFilter "nearest" "nearest")
+  ;;(love.graphics.setDefaultFilter "nearest" "nearest")
   (love.graphics.setColor 1 1 1)
   (push:setupScreen _G.game-width _G.game-height (* 0.4 window-width)
                     (* 0.4 window-height) {:vsync true :resizable true})

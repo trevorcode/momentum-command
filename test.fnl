@@ -29,12 +29,12 @@
         tag-a (?. entity-a :tag)
         tag-b (?. entity-b :tag)]
     (case [tag-a tag-b]
-      [:enemy :enemy] (print "ENEMY")
+      [:enemy :enemy] nil
       [:enemy :ball] (entity-a:collide-with-ball)
       [:ball :enemy] (entity-b:collide-with-ball)
       [:projectile :player] (player-hits-projectile entity-b entity-a)
       [:player :projectile] (player-hits-projectile entity-a entity-b)
-      [a b] (print a b))))
+      [a b] nil)))
 
 (fn on-collision-exit [a b contact]
   (let [entity-a (a:getUserData)
@@ -108,7 +108,7 @@
        (love.physics.newFixture game.player.body game.player.shape))
   (game.player.fixture:setUserData game.player))
 
-(fn load [] 
+(fn load []
   (push:setupCanvas [{:name "shader"
                       :shader [assets.glow-shader-x assets.glow-shader-y]}
                      {:name "noshader"}])
@@ -139,30 +139,47 @@
   (lg.pop))
 
 (fn draw-player []
-  (local (r g b) (lg.getColor))
-  (let [
-        hitbox-points [(game.player.shape:getPoints)]
-        [x1 y1 x2 y2 x3 y3 x4 y4 x5 y5] hitbox-points
-        ; TODO: fix offset directions
-        ; 1: lower right rectangle
-        ; 2: lower left rectangle
-        ; 3: upper left rectangle
-        ; 4: triangle tip
-        ; 5: upper right rectangle
-        hitbox-white [(- x1 4) (+ y1 4) (- x2 4) (- y2 4) (+ x3 4) (- y3 4) (+ x4 4) (+ y4 0) (+ x5 4) (+ y5 4)]
-        hitbox-black [(- x1 8) (+ y1 8) (- x2 8) (- y2 8) (+ x3 8) (- y3 8) (+ x4 8) (+ y4 0) (+ x5 8) (+ y5 8)]
-        ]
-    (lg.setColor 0.6 0.6 1)
-    (lg.polygon :fill
-                (game.player.body:getWorldPoints (unpack hitbox-points)))
-    (lg.setColor 1 1 1)
-    (lg.polygon :fill (game.player.body:getWorldPoints (unpack hitbox-white)))
-    (lg.setColor 0 0 0)
-    (lg.polygon :fill (game.player.body:getWorldPoints (unpack hitbox-black)))
-    (lg.setColor 1 0.6 0.6)
-    (lg.circle :line game.player.x game.player.y 10)
-    (lg.setColor r g b)))
-  
+  (when (not game.player.game-over?)
+    (local (r g b) (lg.getColor))
+    (let [hitbox-points [(game.player.shape:getPoints)]
+          [x1 y1 x2 y2 x3 y3 x4 y4 x5 y5] hitbox-points
+          ; TODO: fix offset directions
+          ; 1: lower right rectangle
+          ; 2: lower left rectangle
+          ; 3: upper left rectangle
+          ; 4: triangle tip
+          ; 5: upper right rectangle
+          hitbox-white [(- x1 4)
+                        (+ y1 4)
+                        (- x2 4)
+                        (- y2 4)
+                        (+ x3 4)
+                        (- y3 4)
+                        (+ x4 4)
+                        (+ y4 0)
+                        (+ x5 4)
+                        (+ y5 4)]
+          hitbox-black [(- x1 8)
+                        (+ y1 8)
+                        (- x2 8)
+                        (- y2 8)
+                        (+ x3 8)
+                        (- y3 8)
+                        (+ x4 8)
+                        (+ y4 0)
+                        (+ x5 8)
+                        (+ y5 8)]]
+      (lg.setColor 0.6 0.6 1)
+      (lg.polygon :fill
+                  (game.player.body:getWorldPoints (unpack hitbox-points)))
+      (lg.setColor 1 1 1)
+      (lg.polygon :fill (game.player.body:getWorldPoints (unpack hitbox-white)))
+      (lg.setColor 0 0 0)
+      (lg.polygon :fill (game.player.body:getWorldPoints (unpack hitbox-black)))
+      (lg.setColor 1 0.6 0.6)
+      (lg.circle :line game.player.x game.player.y 10)
+      (lg.setColor r g b))))
+
 (fn draw-ball []
   (lg.setColor 1 1 1)
   (lg.circle :line _G.cursor.x _G.cursor.y 10)
@@ -193,6 +210,10 @@
   (draw-ball)
   (draw-scene)
   (lg.setColor 1 1 1)
+
+  (when game.game-over?
+    (lg.printf "Game Over" 0 300 (/ _G.game-width 8) "center" 0 8 8 0 0 0))
+
   (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
   (lg.print (string.format "Player X: %f Player Y: %f" game.player.x
                            game.player.y) nil 20)
@@ -211,13 +232,18 @@
         (case o.body b (b:destroy))
         (table.remove objects i)))))
 
-(fn update [dt]
-  (game.world:update dt)
+(fn set-game-over []
+  (set game.game-over? true)
+  (set game.player.game-over? true)
+  (game.player.body:setActive false)
+  (: (assets.explosion-sound:clone) :play))
+
+(fn update-game [dt]
   (local ball-now-in-bounds?
     (let [(ball-x ball-y) (game.ball.body:getPosition)]
       (util.point-within? {:x ball-x :y ball-y} {:x 0 :y 0 :width _G.game-width :height _G.game-height})))
   (when (<= game.player.health 0)
-    (print "GAME OVER")) ; TODO: Change scene, etc.
+    (set-game-over))
   (if (<= game.spawn-timer 0)
       (do
         (set game.spawn-timer (+ 0.25 (love.math.random 0 8)))
@@ -275,6 +301,12 @@
         (game.ball.body:setLinearVelocity new-vx new-vy))))
   (delete-destroyed-game-objects! game.objects)
   (game.player.body:setPosition new-x new-y))
+
+(fn update [dt]
+  (game.world:update dt)
+  (if game.game-over?
+      nil
+      (update-game dt)))
 
 (fn mousepressed [])
 (fn mousereleased [])
