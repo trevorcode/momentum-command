@@ -4,6 +4,7 @@
 (local enemy (require :enemy))
 (local fennel (require :lib.fennel))
 (local projectile (require :projectile))
+(local assets (require :assets))
 
 (local game {})
 
@@ -99,6 +100,8 @@
   (game.player.fixture:setUserData game.player))
 
 (fn load [] ; game world
+  (push:setupCanvas [ {:name "shader" :shader [assets.glow-shader-x assets.glow-shader-y]}
+                      {:name "noshader"}])
   (set game.world (love.physics.newWorld 0 0 true)) ; (love.physics.setMeter 10)
   (game.world:setCallbacks on-collision-enter on-collision-exit)
   (set game.spawn-timer 0)
@@ -139,7 +142,7 @@
   (lg.circle :fill (game.ball.body:getX) (game.ball.body:getY)
              (game.ball.shape:getRadius)))
 
-(fn draw []
+(fn draw-scene []
   (draw-player)
   (draw-ball)
   (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
@@ -153,6 +156,16 @@
             nil 60)
   (each [_ o (ipairs game.objects)]
     (o:draw)))
+
+(fn draw []
+  (assets.glow-shader-x:send "stepSize" [(/ 1 _G.game-width) (/ 1 _G.game-height)])
+  (assets.glow-shader-y:send "stepSize" [(/ 1 _G.game-width) (/ 1 _G.game-height)])
+  (push:setCanvas "shader")
+  (draw-scene)
+
+  (push:setCanvas "noshader")
+  (draw-scene)
+  )
 
 (fn delete-destroyed-game-objects! [objects]
   (for [i (length objects) 1 -1]
