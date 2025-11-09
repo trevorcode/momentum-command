@@ -6,6 +6,7 @@
 (local enemy {})
 (local max-tiers 4)
 (local projectile-reload 100)
+(local speed 20)
 
 (fn collide-with-ball [enemy]
   (if (<= enemy.tier 1)
@@ -28,13 +29,22 @@
     (lg.circle :fill (self.body:getX) (self.body:getY) self.radius)))
 
 (fn update [self dt]
+  (let [p-x (self.player.body:getX)
+        p-y (self.player.body:getY)
+        self-x (self.body:getX)
+        self-y (self.body:getY)
+        angle (math.atan2 (- p-y self-y) (- p-x self-x))
+        vx (* speed (math.cos angle))
+        vy (* speed (math.sin angle))]
+    (self.body:setLinearVelocity vx vy))
+
   (if (<= self.projectile-timer 0)
       (do
         (set self.projectile-timer (+ projectile-reload (love.math.random 1 50)))
         (self:create-projectile))
       (set self.projectile-timer (- self.projectile-timer 1))))
 
-(fn new [world create-projectile ?x ?y ?tier]
+(fn new [world create-projectile player ?x ?y ?tier]
   (let [new-enemy {}
         x (or ?x 50)
         y (or ?y 50)
@@ -58,6 +68,7 @@
       (tset :collide-with-ball collide-with-ball)
       (tset :projectile-timer 30)
       (tset :create-projectile create-projectile)
+      (tset :player player)
       (tset :update update))
     new-enemy))
 

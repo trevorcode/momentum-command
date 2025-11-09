@@ -61,14 +61,6 @@
 (fn create-ball []
   (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 10})
   (set game.ball.tag :ball)
-  (set game.player.tag :player)
-  (set game.player.body
-       (love.physics.newBody game.world game.player.x game.player.y :kinematic))
-  ; The collision of the player is larger than the sprite, for good feels
-  (set game.player.shape (love.physics.newPolygonShape -30 0 30 110 30 -110))
-  (set game.player.fixture
-       (love.physics.newFixture game.player.body game.player.shape)) ; ball
-  (game.player.fixture:setUserData game.player)
   (set game.ball.body (love.physics.newBody game.world game.ball.x game.ball.y
                                             :dynamic))
   (set game.ball.shape (love.physics.newCircleShape game.ball.radius))
@@ -77,24 +69,36 @@
   (game.ball.fixture:setUserData game.ball) ; restitution is how much % energy the fixture keeps after collision
   (game.ball.fixture:setRestitution 1)
   (game.ball.body:setMass 50)
-  (game.ball.body:setLinearVelocity 1500 500))
+  (game.ball.body:setLinearVelocity 500 500))
+
+(fn create-player []
+  (set game.player {:x (/ _G.game-width 2)
+                      :y (/ _G.game-height 2)
+                      :angle 0
+                      :speed 10})
+  (set game.player.tag :player)
+  (set game.player.body
+       (love.physics.newBody game.world game.player.x game.player.y :kinematic))
+  ; The collision of the player is larger than the sprite, for good feels
+  (set game.player.shape (love.physics.newPolygonShape -30 0 30 110 30 -110))
+  (set game.player.fixture
+       (love.physics.newFixture game.player.body game.player.shape))
+  (game.player.fixture:setUserData game.player))
 
 (fn load [] ; game world
-  (set game.world (love.physics.newWorld 0 0 true)) ; (love.physics.setMeter 10)
-  (game.world:setCallbacks on-collision-enter on-collision-exit)
-  (set game.bounds {})
-  (set game.objects [])
-  (set game.player {:x (/ _G.game-width 2)
-                    :y (/ _G.game-height 2)
-                    :angle 0
-                    :speed 10}) ; ball
-  (load-walls)
-  (create-ball)
-  (let [create-proj (create-new-projectile game.objects game.player)]
-    (table.insert game.objects (enemy.new game.world create-proj 50 50))
-    (table.insert game.objects (enemy.new game.world create-proj 100))
-    (table.insert game.objects (enemy.new game.world create-proj 200 200))
-    (table.insert game.objects (enemy.new game.world create-proj 300 300))))
+    (set game.world (love.physics.newWorld 0 0 true))
+    ; (love.physics.setMeter 10)
+    (game.world:setCallbacks on-collision-enter on-collision-exit)
+    (set game.bounds {}) (set game.objects [])
+     ; ball
+    (load-walls)
+    (create-ball)
+    (create-player)
+    (let [create-proj (create-new-projectile game.objects game.player)]
+      (table.insert game.objects (enemy.new game.world create-proj game.player 50 50))
+      (table.insert game.objects (enemy.new game.world create-proj game.player 100))
+      (table.insert game.objects (enemy.new game.world create-proj game.player 200 200))
+      (table.insert game.objects (enemy.new game.world create-proj game.player 300 300))))
 
 (fn draw-rotated-rectangle [mode x y width height angle]
   (lg.push)
@@ -139,6 +143,18 @@
         (case o.body b (b:destroy))
         (table.remove objects i)))))
 
+(fn vector-length [[vx vy]]
+  (math.sqrt (+ (^ vx 2) (^ vy 2))))
+
+(fn vector-normalize [[vx vy]]
+  (let [len (vector-length [vx vy])
+        new-vx (/ vx len)
+        new-vy (/ vy len)]
+    [new-vx new-vy]))
+
+(fn vector-scale [[x y] mag]
+  [(* x mag) (* y mag)])
+
 (fn update [dt]
   (game.world:update dt)
   (each [_ o (ipairs game.objects)]
@@ -168,6 +184,13 @@
                              :height _G.game-height})
     (set game.player.x new-x)
     (set game.player.y new-y))
+
+  (let [(vx vy) (game.ball.body:getLinearVelocity)
+        speed (vector-length [vx vy]) ]
+    (when (< speed 600)
+      (let [[new-vx new-vy] (vector-scale (vector-normalize [vx vy]) 500)]
+        (game.ball.body:setLinearVelocity new-vx new-vy))))
+  
   (delete-destroyed-game-objects! game.objects)
   (set game.player.y new-y)
   (game.player.body:setPosition new-x new-y))
