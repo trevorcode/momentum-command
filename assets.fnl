@@ -43,6 +43,7 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screenCoords) {
   (set assets.hit-hurt-sound (love.audio.newSource :assets/hitHurt.wav :static))
   (set assets.laser-sound (love.audio.newSource :assets/laser.wav :static))
   (set assets.paddlehurt-sound (love.audio.newSource :assets/paddlehurt.wav :static))
-  )
+  (set assets.heart (love.graphics.newImage :assets/heart.png))
+  (assets.heart:setFilter "nearest" "nearest"))
 
 assets

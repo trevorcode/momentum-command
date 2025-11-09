@@ -197,6 +197,10 @@
     (each [_ o (ipairs projectiles)]
       (o:draw))))
 
+(fn draw-hearts []
+  (for [i 0 (- game.player.health 1) 1]
+    (lg.draw assets.heart (* i 35) (- _G.game-height 40) 0 3 3)))
+
 (fn draw []
   (push:setCanvas "shader")
   (draw-scene)
@@ -209,6 +213,8 @@
   (when game.game-over?
     (button.draw game.restart)
     (lg.printf "Game Over" 0 300 (/ _G.game-width 8) "center" 0 8 8 0 0 0))
+
+  (draw-hearts)
 
   (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
   (lg.print (string.format "Player X: %f Player Y: %f" game.player.x
