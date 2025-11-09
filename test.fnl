@@ -73,9 +73,9 @@
 
 (fn create-player []
   (set game.player {:x (/ _G.game-width 2)
-                      :y (/ _G.game-height 2)
-                      :angle 0
-                      :speed 10})
+                    :y (/ _G.game-height 2)
+                    :angle 0
+                    :speed 10})
   (set game.player.tag :player)
   (set game.player.body
        (love.physics.newBody game.world game.player.x game.player.y :kinematic))
@@ -86,19 +86,23 @@
   (game.player.fixture:setUserData game.player))
 
 (fn load [] ; game world
-    (set game.world (love.physics.newWorld 0 0 true))
-    ; (love.physics.setMeter 10)
-    (game.world:setCallbacks on-collision-enter on-collision-exit)
-    (set game.bounds {}) (set game.objects [])
-     ; ball
-    (load-walls)
-    (create-ball)
-    (create-player)
-    (let [create-proj (create-new-projectile game.objects game.player)]
-      (table.insert game.objects (enemy.new game.world create-proj game.player 50 50))
-      (table.insert game.objects (enemy.new game.world create-proj game.player 100))
-      (table.insert game.objects (enemy.new game.world create-proj game.player 200 200))
-      (table.insert game.objects (enemy.new game.world create-proj game.player 300 300))))
+  (set game.world (love.physics.newWorld 0 0 true)) ; (love.physics.setMeter 10)
+  (game.world:setCallbacks on-collision-enter on-collision-exit)
+  (set game.spawn-timer 0)
+  (set game.bounds {})
+  (set game.objects []) ; ball
+  (load-walls)
+  (create-ball)
+  (create-player)
+  (let [create-proj (create-new-projectile game.objects game.player)]
+    (table.insert game.objects (enemy.new game.world create-proj game.player 50
+                                          50))
+    (table.insert game.objects (enemy.new game.world create-proj game.player
+                                          100))
+    (table.insert game.objects
+                  (enemy.new game.world create-proj game.player 200 200))
+    (table.insert game.objects
+                  (enemy.new game.world create-proj game.player 300 300))))
 
 (fn draw-rotated-rectangle [mode x y width height angle]
   (lg.push)
@@ -129,6 +133,7 @@
   (lg.print (string.format "Player X: %f Player Y: %f" game.player.x
                            game.player.y) nil 20)
   (lg.print (string.format "Angle: %f" game.player.angle) nil 40)
+  (lg.print (string.format "Spawn Timer: %f" game.spawn-timer) nil 80)
   (lg.print (let [(vx vy) (game.ball.body:getLinearVelocity)
                   (v) (math.sqrt (+ (math.pow vx 2) (math.pow vy 2)))]
               (string.format "Ball Linear Speed: %f vx:%f vy:%f" v vx vy))
@@ -157,6 +162,17 @@
 
 (fn update [dt]
   (game.world:update dt)
+
+  (if (<= game.spawn-timer 0)
+      (do
+        (set game.spawn-timer (+ 2 (love.math.random 1 15)))
+        (let [create-proj (create-new-projectile game.objects game.player)]
+          (table.insert game.objects
+                        (enemy.new game.world create-proj game.player
+                                   (love.math.random 50 (- _G.game-width 50))
+                                   (love.math.random 50 (- _G.game-height 50))))))
+      (set game.spawn-timer (- game.spawn-timer dt)))
+
   (each [_ o (ipairs game.objects)]
     (o:update dt))
   (local (mouse-x mouse-y) (push:toGame (love.mouse.getPosition))) ; mouse within game
@@ -184,13 +200,11 @@
                              :height _G.game-height})
     (set game.player.x new-x)
     (set game.player.y new-y))
-
   (let [(vx vy) (game.ball.body:getLinearVelocity)
-        speed (vector-length [vx vy]) ]
+        speed (vector-length [vx vy])]
     (when (< speed 600)
       (let [[new-vx new-vy] (vector-scale (vector-normalize [vx vy]) 500)]
         (game.ball.body:setLinearVelocity new-vx new-vy))))
-  
   (delete-destroyed-game-objects! game.objects)
   (set game.player.y new-y)
   (game.player.body:setPosition new-x new-y))
