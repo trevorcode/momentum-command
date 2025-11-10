@@ -14,7 +14,7 @@
   (: (assets.laser-sound:clone) :play)
   (let [ball-body (ball:getBody)
         (vx vy) (ball-body:getLinearVelocity)
-        [new-vx new-vy] (util.vector-scale [vx vy] 1.1)]
+        [new-vx new-vy] (util.vector-scale [vx vy] 1.3)]
     (ball-body:setLinearVelocity new-vx new-vy)))
 
 (fn player-hits-projectile [_player projectile]
@@ -90,7 +90,7 @@
     (table.insert objects p)))
 
 (fn create-ball []
-  (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 50 :in-bounds? true :oob-max-duration 2 :min-speed 800})
+  (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 50 :in-bounds? true :oob-max-duration 2 :min-speed 1000})
   (set game.ball.tag :ball)
   (set game.ball.body (love.physics.newBody game.world game.ball.x game.ball.y
                                             :dynamic))
@@ -99,8 +99,8 @@
        (love.physics.newFixture game.ball.body game.ball.shape))
   (game.ball.fixture:setUserData game.ball) ; restitution is how much % energy the fixture keeps after collision
   (game.ball.fixture:setRestitution 1)
-  (game.ball.body:setMass 50)
-  (game.ball.body:setLinearVelocity 600 600))
+  (game.ball.body:setMass 100)
+  (game.ball.body:setLinearVelocity game.ball.min-speed game.ball.min-speed))
 
 (fn create-player []
   (set game.player {:x (/ _G.game-width 2)
