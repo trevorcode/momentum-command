@@ -59,27 +59,27 @@
 
 (fn load-walls [] ; left
   (set game.bounds.left
-       {:body (love.physics.newBody game.world -25 (/ _G.game-height 2) :static)
-        :shape (love.physics.newRectangleShape 50 _G.game-height)})
+       {:body (love.physics.newBody game.world 0 (/ _G.game-height 2) :static)
+        :shape (love.physics.newRectangleShape 50 (+ _G.game-height 1000))})
   (set game.bounds.left.fixture
        (love.physics.newFixture game.bounds.left.body game.bounds.left.shape))
   ; right
   (set game.bounds.right
-       {:body (love.physics.newBody game.world (+ _G.game-width 25)
+       {:body (love.physics.newBody game.world _G.game-width
                                     (/ _G.game-height 2) :static)
-        :shape (love.physics.newRectangleShape 50 _G.game-height)})
+        :shape (love.physics.newRectangleShape 50 (+ _G.game-height 1000))})
   (set game.bounds.right.fixture
        (love.physics.newFixture game.bounds.right.body game.bounds.right.shape))
   ; top
   (set game.bounds.top
-       {:body (love.physics.newBody game.world (/ _G.game-width 2) -25 :static)
-        :shape (love.physics.newRectangleShape _G.game-width 50)})
+       {:body (love.physics.newBody game.world (/ _G.game-width 2) 0 :static)
+        :shape (love.physics.newRectangleShape (+ _G.game-width 1000) 50)})
   (set game.bounds.top.fixture
        (love.physics.newFixture game.bounds.top.body game.bounds.top.shape)) ; bottom
   (set game.bounds.bottom
        {:body (love.physics.newBody game.world (/ _G.game-width 2)
-                                    (+ _G.game-height 25) :static)
-        :shape (love.physics.newRectangleShape _G.game-width 50)})
+                                    _G.game-height :static)
+        :shape (love.physics.newRectangleShape (+ _G.game-width 1000) 50)})
   (set game.bounds.bottom.fixture
        (love.physics.newFixture game.bounds.bottom.body
                                 game.bounds.bottom.shape)))
@@ -147,6 +147,17 @@
                     (enemy.new game.world create-proj game.player
                                (love.math.random 50 (- _G.game-width 50))
                                (love.math.random 50 (- _G.game-height 50)))))))
+
+(fn draw-bounds []
+  (let [left [(game.bounds.left.body:getWorldPoints (game.bounds.left.shape:getPoints))]
+        right [(game.bounds.right.body:getWorldPoints (game.bounds.right.shape:getPoints))]
+        top [(game.bounds.top.body:getWorldPoints (game.bounds.top.shape:getPoints))]
+        bottom [(game.bounds.bottom.body:getWorldPoints (game.bounds.top.shape:getPoints))]]
+        (lg.setColor 0.3 0.3 0.6)
+        (lg.polygon :fill (unpack left))
+        (lg.polygon :fill (unpack right))
+        (lg.polygon :fill (unpack top))
+        (lg.polygon :fill (unpack bottom))))
 
 (fn draw-rotated-rectangle [mode x y width height angle]
   (lg.push)
@@ -232,6 +243,7 @@
   (draw-player)
   (draw-ball)
   (draw-scene)
+  (draw-bounds)
   (lg.setColor 1 1 1)
   (lg.circle :line _G.cursor.x _G.cursor.y 10) ; cursor
   (when game.game-over?
