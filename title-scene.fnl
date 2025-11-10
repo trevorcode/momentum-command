@@ -15,8 +15,6 @@
                                [(/ 1 _G.game-width) (/ 1 _G.game-height)])
     (assets.glow-shader-y:send "stepSize"
                                [(/ 1 _G.game-width) (/ 1 _G.game-height)])
-    (assets.glow-shader-x:send "blurRadius" 40)
-    (assets.glow-shader-y:send "blurRadius" 40)
   (set scene {})
   (set scene.play
        (button.new {:x (/ _G.game-width 2)
@@ -27,7 +25,7 @@
                     :txt-size 6
                     :onclick (fn []
                                (: (assets.laser-sound:clone) :play)
-                               (sm.change-scene :test))})))
+                               (sm.change-scene :game-scene))})))
 
 (fn scene.draw []
   (push:setCanvas "shader")
