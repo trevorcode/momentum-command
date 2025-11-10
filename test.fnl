@@ -14,7 +14,7 @@
   (: (assets.laser-sound:clone) :play)
   (let [ball-body (ball:getBody)
         (vx vy) (ball-body:getLinearVelocity)
-        [new-vx new-vy] (util.vector-scale [vx vy] 1.3)]
+        [new-vx new-vy] (util.vector-scale [vx vy] 1.2)]
     (ball-body:setLinearVelocity new-vx new-vy)))
 
 (fn player-hits-projectile [_player projectile]
