@@ -39,6 +39,7 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screenCoords) {
                                                (.. " abcdefghijklmnopqrstuvwxyz"
                                                    :ABCDEFGHIJKLMNOPQRSTUVWXYZ0
                                                    "123456789.,!?-+/():;%&`'*#=[]\"")))
+  (set assets.bg-music (love.audio.newSource "assets/ERH BlueBeat 01 [loop].ogg" :static))
   (set assets.explosion-sound (love.audio.newSource :assets/explosion.wav :static))
   (set assets.hit-hurt-sound (love.audio.newSource :assets/hitHurt.wav :static))
   (set assets.laser-sound (love.audio.newSource :assets/laser.wav :static))

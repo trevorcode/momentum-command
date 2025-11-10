@@ -18,7 +18,7 @@
   (love.graphics.setFont assets.font)
   (scene-manager.change-scene :title-scene))
 
-(fn love.draw [] ; TODO: nil check these values before using ; (local font-height ((love.graphics.getFont):getHeight))
+(fn love.draw []
   (push:start)
   (scene-manager.draw)
   (push:finish))

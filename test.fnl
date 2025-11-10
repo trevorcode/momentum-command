@@ -121,6 +121,8 @@
   (set game {})
   (set game.world (love.physics.newWorld 0 0 true))
   (game.world:setCallbacks on-collision-enter on-collision-exit)
+  (assets.bg-music:setLooping true)
+  (assets.bg-music:play)
   (set game.spawn-timer 0)
   (set game.min-spawn-timer 1.25)
   (set game.max-spawn-timer 6)
@@ -260,6 +262,7 @@
   (set game.player.game-over? true)
   (game.player.body:setActive false)
   (: (assets.explosion-sound:clone) :play)
+  (assets.bg-music:stop)
   (set game.restart
        (button.new {:x (/ _G.game-width 2)
                     :y (+ (/ _G.game-height 2) 100)
