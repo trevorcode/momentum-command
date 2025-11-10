@@ -36,11 +36,13 @@
     (case [tag-a tag-b]
       [:enemy :enemy] nil
       [:enemy :ball] (do
-        (entity-a:collide-with-ball)
-        (when entity-a.destroy? (set game.score (+ game.score 1))))
+                       (entity-a:collide-with-ball)
+                       (when entity-a.destroy?
+                         (set game.score (+ game.score 1))))
       [:ball :enemy] (do
-        (entity-b:collide-with-ball)
-        (when entity-b.destroy? (set game.score (+ game.score 1))))
+                       (entity-b:collide-with-ball)
+                       (when entity-b.destroy?
+                         (set game.score (+ game.score 1))))
       [:projectile :player] (player-hits-projectile entity-b entity-a)
       [:player :projectile] (player-hits-projectile entity-a entity-b)
       [a b] nil)))
@@ -90,7 +92,12 @@
     (table.insert objects p)))
 
 (fn create-ball []
-  (set game.ball {:x (/ _G.game-width 2) :y (/ _G.game-height 2) :radius 50 :in-bounds? true :oob-max-duration 2 :min-speed 1000})
+  (set game.ball {:x (/ _G.game-width 2)
+                  :y (/ _G.game-height 2)
+                  :radius 50
+                  :in-bounds? true
+                  :oob-max-duration 2
+                  :min-speed 1000})
   (set game.ball.tag :ball)
   (set game.ball.body (love.physics.newBody game.world game.ball.x game.ball.y
                                             :dynamic))
@@ -126,8 +133,7 @@
   (set game.spawn-timer 0)
   (set game.min-spawn-timer 1.25)
   (set game.max-spawn-timer 6)
-  (set game.start-timer (love.timer.getTime))
-  ; higher coef, less time to reach min spawn timer, harder
+  (set game.start-timer (love.timer.getTime)) ; higher coef, less time to reach min spawn timer, harder
   (set game.difficulty-coef 0.1)
   (set game.score 0)
   (set game.bounds {})
@@ -136,14 +142,11 @@
   (create-ball)
   (create-player)
   (let [create-proj (create-new-projectile game.objects game.player)]
-    (table.insert game.objects (enemy.new game.world create-proj game.player 50
-                                          50))
-    (table.insert game.objects (enemy.new game.world create-proj game.player
-                                          100))
-    (table.insert game.objects
-                  (enemy.new game.world create-proj game.player 200 200))
-    (table.insert game.objects
-                  (enemy.new game.world create-proj game.player 300 300))))
+    (for [i 1 4]
+      (table.insert game.objects
+                    (enemy.new game.world create-proj game.player
+                               (love.math.random 50 (- _G.game-width 50))
+                               (love.math.random 50 (- _G.game-height 50)))))))
 
 (fn draw-rotated-rectangle [mode x y width height angle]
   (lg.push)
@@ -199,7 +202,8 @@
   (lg.circle :fill (game.ball.body:getX) (game.ball.body:getY)
              (game.ball.shape:getRadius))
   (lg.setColor 0 0 0)
-  (lg.circle :fill (game.ball.body:getX) (game.ball.body:getY) (- (game.ball.shape:getRadius) 4))
+  (lg.circle :fill (game.ball.body:getX) (game.ball.body:getY)
+             (- (game.ball.shape:getRadius) 4))
   (lg.setColor 1 1 1)
   (lg.circle :fill (game.ball.body:getX) (game.ball.body:getY)
              (- (game.ball.shape:getRadius) 10)))
@@ -230,24 +234,12 @@
   (draw-scene)
   (lg.setColor 1 1 1)
   (lg.circle :line _G.cursor.x _G.cursor.y 10) ; cursor
-
   (when game.game-over?
     (button.draw game.restart)
     (lg.printf "Game Over" 0 300 (/ _G.game-width 8) "center" 0 8 8 0 0 0))
-
   (draw-hearts)
-  (draw-score)
-
-  ; (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
-  ; (lg.print (string.format "Player X: %f Player Y: %f" game.player.x
-  ;                          game.player.y) nil 20)
-  ; (lg.print (string.format "Angle: %f" game.player.angle) nil 40)
-  ; (lg.print (string.format "Spawn Timer: %f" game.spawn-timer) nil 80)
-  ; (lg.print (let [(vx vy) (game.ball.body:getLinearVelocity)
-  ;                 (v) (math.sqrt (+ (math.pow vx 2) (math.pow vy 2)))]
-  ;             (string.format "Ball Linear Speed: %f vx:%f vy:%f" v vx vy))
-  ;           nil 60)
-  ; (lg.print (string.format "Health: %d" game.player.health) nil 100))
+  (draw-score) ; (lg.print (string.format "Mouse X: %f Mouse Y: %f" _G.cursor.x _G.cursor.y))
+  ; (lg.print (string.format "Player X: %f Player Y: %f" game.player.x ;                          game.player.y) nil 20) ; (lg.print (string.format "Angle: %f" game.player.angle) nil 40) ; (lg.print (string.format "Spawn Timer: %f" game.spawn-timer) nil 80) ; (lg.print (let [(vx vy) (game.ball.body:getLinearVelocity) ;                 (v) (math.sqrt (+ (math.pow vx 2) (math.pow vy 2)))] ;             (string.format "Ball Linear Speed: %f vx:%f vy:%f" v vx vy)) ;           nil 60) ; (lg.print (string.format "Health: %d" game.player.health) nil 100))
   )
 
 (fn delete-destroyed-game-objects! [objects]
@@ -277,13 +269,20 @@
 (fn update-game [dt]
   (game.world:update dt)
   (local ball-now-in-bounds?
-    (let [(ball-x ball-y) (game.ball.body:getPosition)]
-      (util.point-within? {:x ball-x :y ball-y} {:x 0 :y 0 :width _G.game-width :height _G.game-height})))
+         (let [(ball-x ball-y) (game.ball.body:getPosition)]
+           (util.point-within? {:x ball-x :y ball-y}
+                               {:x 0
+                                :y 0
+                                :width _G.game-width
+                                :height _G.game-height})))
   (when (<= game.player.health 0)
     (set-game-over))
   (if (<= game.spawn-timer 0)
       (do
-        (set game.spawn-timer (calc-spawn-timer game.min-spawn-timer game.max-spawn-timer (- (love.timer.getTime) game.start-timer) game.difficulty-coef))
+        (set game.spawn-timer
+             (calc-spawn-timer game.min-spawn-timer game.max-spawn-timer
+                               (- (love.timer.getTime) game.start-timer)
+                               game.difficulty-coef))
         (let [create-proj (create-new-projectile game.objects game.player)]
           (table.insert game.objects
                         (enemy.new game.world create-proj game.player
@@ -291,20 +290,22 @@
                                    (love.math.random 50 (- _G.game-height 50))))))
       (set game.spawn-timer (- game.spawn-timer dt)))
   (each [_ o (ipairs game.objects)]
-    (o:update dt))
-  ; When ball continues to be out-of-bounds
+    (o:update dt)) ; When ball continues to be out-of-bounds
   (when (not ball-now-in-bounds?)
     (if game.ball.in-bounds?
-      (do ; Initial out of bounds frame
-        (set game.ball.in-bounds? false)
-        (set game.ball.oob-timer (love.timer.getTime)))
-      (let [oob-duration (- (love.timer.getTime) game.ball.oob-timer)
-           [new-vx new-vy] (util.vector-rotate [(game.ball.body:getLinearVelocity)] (math.floor (math.random 0 100000)))]
-        (when (<= game.ball.oob-max-duration oob-duration) ; CONSIDER: Reseting the ball linear velocity to a different direction
-          (game.ball.body:setPosition (/ _G.game-width 2) (/ _G.game-height 2))
-          (game.ball.body:setLinearVelocity new-vx new-vy)
-          (set game.ball.in-bounds? true))))) 
-        
+        (do
+          ; Initial out of bounds frame
+          (set game.ball.in-bounds? false)
+          (set game.ball.oob-timer (love.timer.getTime)))
+        (let [oob-duration (- (love.timer.getTime) game.ball.oob-timer)
+              [new-vx new-vy] (util.vector-rotate [(game.ball.body:getLinearVelocity)]
+                                                  (math.floor (math.random 0
+                                                                           100000)))]
+          (when (<= game.ball.oob-max-duration oob-duration) ; CONSIDER: Reseting the ball linear velocity to a different direction
+            (game.ball.body:setPosition (/ _G.game-width 2)
+                                        (/ _G.game-height 2))
+            (game.ball.body:setLinearVelocity new-vx new-vy)
+            (set game.ball.in-bounds? true)))))
   (local (mouse-x mouse-y) (push:toGame (love.mouse.getPosition))) ; mouse within game
   (when (and mouse-x mouse-y)
     (local angle-to-mouse
@@ -348,7 +349,8 @@
 (fn mousepressed [])
 (fn mousereleased []
   (when game.game-over?
-      (button.mousepressed game.restart)))
+    (button.mousepressed game.restart)))
+
 (fn keypressed [])
 
 {: draw : update : load : mousepressed : mousereleased : keypressed}
